@@ -1,3 +1,4 @@
+#!python2
 # encoding:utf-8
 """
 Simple ffmpeg wrapper to split single file musical albums
