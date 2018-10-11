@@ -145,7 +145,9 @@ def get_sound_boundaries(silence_data):
             sound_boundaries.append((0, interval.start))
         elif index == interval_data_len-1:
             # for last track, we take everything from last "silence end" to the end of the file
-            sound_boundaries.append((previous_silence_end, file_end))
+            # but only if it's not the end marker, otherwise we risk adding previous track two times
+            if interval.end is None:
+                sound_boundaries.append((previous_silence_end, file_end))
         else:
             # otherwise, we take everything between last silence end and new silence start
             if interval.start:
