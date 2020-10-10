@@ -319,6 +319,21 @@ def split_file_into_tracks(input_filename, track_boundaries, filenames):
             raise RuntimeError("ffmpeg quit with {code}:\n{out}\n{err}".format(code=proc.returncode, out=out_text, err=err_text))
 
 
+def make_numbered_filenames(filenames):
+    has_numbers_in_title = [
+        any(
+            map(str.isnumeric, os.path.splitext(name)[0])
+        ) for name in filenames
+    ]
+
+    if len(list(filter(None, has_numbers_in_title))) == len(filenames):
+        return filenames
+
+    for index, f in enumerate(filenames):
+        filenames[index] = "{}. {}".format(index+1, f)
+    return filenames
+
+
 def main():
     args = sys.argv[1:]
 
@@ -348,6 +363,7 @@ def main():
         print("Found chapters info, using it.")
         tracks_data = [(x['start_time'], x['end_time']) for x in chapters_data]
         filenames = [x['title'] for x in chapters_data]
+        filenames = make_numbered_filenames(filenames)
 
         print_tracks(tracks_data, filenames)
         is_ok = confirm()
