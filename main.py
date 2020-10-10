@@ -130,7 +130,7 @@ def get_sound_boundaries(silence_data):
             file_start = float(temp_start.split(':')[1])
 
     if file_start is None or file_end is None:
-        raise AssertionError('start or end not found: {}/{}'.format(start, end))
+        raise AssertionError('start or end not found: {}/{}'.format(file_start, file_end))
 
     # transforms list of namedtuples into a list of silence boundaries:
     # [(0, start_of_next_silence), (end_of_previous_silence, start_of_next_silence), ..., (end_of_previous_silence, end_of_file)]
