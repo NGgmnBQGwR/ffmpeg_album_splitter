@@ -234,16 +234,20 @@ def find_tracks(sound_boundaries, gap_multiplier=1):
     return track_boundaries
 
 
-def print_tracks(track_boundaries):
+def print_tracks(track_boundaries, filenames):
     """
     Print detected tracks in a human-friendly format.
     """
     if not track_boundaries:
         return
-    entry = "Track {index:02} [{duration}] {start} - {finish} ({starts} - {finishs})"
+    entry = "Track {name} [{duration}] {start} - {finish} ({starts} - {finishs})"
     for index, track in enumerate(track_boundaries):
+        if filenames:
+            name = filenames[index]
+        else:
+            name = "{:02}".format(index)
         print(entry.format(
-            index=index,
+            name=name,
             duration=format_time_from_seconds(track[1]-track[0])[3:],
             start=format_time_from_seconds(track[0]),
             finish=format_time_from_seconds(track[1]),
@@ -266,7 +270,7 @@ def confirm(text=None):
             return False
 
 
-def split_file_into_tracks(input_filename, track_boundaries):
+def split_file_into_tracks(input_filename, track_boundaries, filenames):
     """
     Splits input audio file into separate tracks.
     """
@@ -284,7 +288,10 @@ def split_file_into_tracks(input_filename, track_boundaries):
                 os.remove(os.path.join(output_folder, file_))
 
     for index, track in enumerate(track_boundaries):
-        filename = "Track{:02}".format(index)
+        if filenames:
+            filename = filenames[index]
+        else:
+            filename = "Track{:02}".format(index)
 
         command_name = FFMPEG_CUT_TRACK.format(
             input=input_filename,
@@ -293,7 +300,8 @@ def split_file_into_tracks(input_filename, track_boundaries):
             end=track[1],
         )
         print('Processing {}...'.format(filename))
-        result = subprocess.check_call(shlex.split(command_name), stderr=subprocess.PIPE)
+        proc = subprocess.Popen(shlex.split(command_name), stderr=subprocess.PIPE)
+        proc.communicate()
 
 
 def main():
@@ -309,22 +317,29 @@ def main():
     chapters_data = get_chapters_data(input_filename)
     if chapters_data:
         print("Found chapters info, using it.")
-        sound_data = chapters_data
+        tracks_data = [(x['start_time'], x['end_time']) for x in chapters_data]
+        filenames = [x['title'] for x in chapters_data]
+
+        print_tracks(tracks_data, filenames)
+        is_ok = confirm()
+        if not is_ok:
+            return
     else:
         print("Unable to get chapters info, using ffmpeg.")
         silence_data = get_silence_data(input_filename)
         sound_data = get_sound_boundaries(silence_data)
+        filenames = None
 
-    for mult in [1, 0.5, 1.5, 0.25, 2, 3, 4, 5]:
-        tracks_data = find_tracks(sound_data, mult)
-        print_tracks(tracks_data)
-        is_ok = confirm()
-        if is_ok:
-            break
-    if not is_ok:
-        return
+        for mult in [1, 0.5, 1.5, 0.25, 2, 3, 4, 5]:
+            tracks_data = find_tracks(sound_data, mult)
+            print_tracks(tracks_data, filenames)
+            is_ok = confirm()
+            if is_ok:
+                break
+        if not is_ok:
+            return
 
-    split_file_into_tracks(input_filename, tracks_data)
+    split_file_into_tracks(input_filename, tracks_data, filenames)
     input('Finished.')
 
 
