@@ -92,7 +92,14 @@ def get_chapters_data(input_filename):
     print('Calling youtube-dl to get video JSON metadata...')
     output_out, output_err = command.communicate()
 
-    data = json.loads(output_out)
+    if command.returncode != 0:
+        raise RuntimeError("youtube-dl quit with {code}:\n{out}\n{err}".format(code=command.returncode, out=output_out, err=output_err))
+
+    try:
+        data = json.loads(output_out)
+    except ValueError:
+        print('Failed to load JSON:\n{}'.format(output_out))
+        raise
     chapters = data['chapters'] or []
     # ffmpeg writes everything to the stderr, which is why we're ignoring stdout
     with open(output_filepath, 'w') as out:
