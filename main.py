@@ -301,7 +301,9 @@ def split_file_into_tracks(input_filename, track_boundaries, filenames):
         )
         print('Processing {}...'.format(filename))
         proc = subprocess.Popen(shlex.split(command_name), stderr=subprocess.PIPE)
-        proc.communicate()
+        out_text, err_text = proc.communicate()
+        if proc.returncode != 0:
+            raise RuntimeError("ffmpeg quit with {code}:\n{out}\n{err}".format(code=proc.returncode, out=out_text, err=err_text))
 
 
 def main():
