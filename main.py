@@ -14,6 +14,7 @@ from collections import namedtuple
 
 FFMPEG_GET_INTERVAL_COMMAND = r'''ffmpeg -i "{input}" -af silencedetect=noise=-30dB:d=0.25 -f null -'''
 FFMPEG_CUT_TRACK = r'''ffmpeg -i "{input}" -acodec copy -ss {start} -to {end} "{output}"'''
+CACHE_FOLDER = '_CACHE'
 
 # any silence longer than this will emit a warning
 MAX_SILENCE_LENGTH = 5
@@ -71,8 +72,9 @@ def get_silence_data(input_filename):
         os.path.basename(input_filename),
         os.path.getsize(input_filename),
     )
-    if os.path.exists(output_filename):
-        with open(output_filename, 'rb') as inp:
+    output_filepath = os.path.join(CACHE_FOLDER, output_filename)
+    if os.path.exists(output_filepath):
+        with open(output_filepath, 'rb') as inp:
             return inp.read()
 
     command_name = FFMPEG_GET_INTERVAL_COMMAND.format(input=input_filename)
@@ -87,7 +89,7 @@ def get_silence_data(input_filename):
     output_out, output_err = command.communicate()
 
     # ffmpeg writes everything to the stderr, which is why we're ignoring stdout
-    with open(output_filename, 'wb') as out:
+    with open(output_filepath, 'wb') as out:
         out.write(output_err)
 
     return output_err

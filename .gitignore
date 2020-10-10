@@ -1,3 +1,4 @@
 *.pyc
 */
 _output_*.txt
+.cache/
