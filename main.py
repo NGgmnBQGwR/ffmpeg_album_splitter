@@ -313,16 +313,30 @@ def split_file_into_tracks(input_filename, track_boundaries, filenames):
 
 
 def main():
-    if len(sys.argv) < 2:
+    args = sys.argv[1:]
+
+    if len(args) < 1:
         print('Need a filename as argument')
         return
 
-    input_filename = sys.argv[1]
+    skip_chapters = False
+    for arg in args[:]:
+        if arg.startswith('-'):
+            if arg == '-sc':
+                skip_chapters = True
+            args.remove(arg)
+
+    input_filename = args[0]
     if not os.path.exists(input_filename):
         print('File not found: "{}"'.format(input_filename))
         return
 
-    chapters_data = get_chapters_data(input_filename)
+    if skip_chapters:
+        print("Skipping chapters.")
+        chapters_data = []
+    else:
+        chapters_data = get_chapters_data(input_filename)
+
     if chapters_data:
         print("Found chapters info, using it.")
         tracks_data = [(x['start_time'], x['end_time']) for x in chapters_data]
