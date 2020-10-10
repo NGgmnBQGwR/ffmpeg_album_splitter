@@ -1,5 +1,3 @@
-#!python2
-# encoding:utf-8
 """
 Simple ffmpeg wrapper to split single file musical albums
 into separate tracks, using silence as track separator.
@@ -91,7 +89,7 @@ def get_chapters_data(input_filename):
         stderr=subprocess.PIPE,
     )
 
-    print 'Calling youtube-dl to get video JSON metadata...'
+    print('Calling youtube-dl to get video JSON metadata...')
     output_out, output_err = command.communicate()
 
     data = json.loads(output_out)
@@ -125,7 +123,7 @@ def get_silence_data(input_filename):
         stderr=subprocess.PIPE,
     )
 
-    print 'Calling ffmpeg to get silence data...'
+    print('Calling ffmpeg to get silence data...')
     output_out, output_err = command.communicate()
 
     # ffmpeg writes everything to the stderr, which is why we're ignoring stdout
@@ -148,7 +146,7 @@ def get_sound_boundaries(silence_data):
     #    [silencedetect @ 0000000001ca7b40] silence_start: 7.0035
     # into a list of namedtuples with 1:1 mapping - every tuple corresponds to a single line
     for line in silence_data.splitlines():
-        line = line.strip()
+        line = line.strip().decode('utf-8')
         if line.startswith('[silencedetect'):
             if 'silence_start' in line:
                 start = float(line.split(':')[1])
@@ -212,7 +210,7 @@ def find_tracks(sound_boundaries, gap_multiplier=1):
     previous_end = None
 
     average_midsound_silence = sum([x[1][0] - x[0][1] for x in zip(sound_boundaries, sound_boundaries[1:])]) / len(sound_boundaries)
-    print 'Using pause of {} seconds to separate tracks.'.format(average_midsound_silence * gap_multiplier)
+    print('Using pause of {} seconds to separate tracks.'.format(average_midsound_silence * gap_multiplier))
 
     track_boundaries = []
     track_start = sound_boundaries[0][0]
@@ -244,16 +242,16 @@ def print_tracks(track_boundaries):
         return
     entry = "Track {index:02} [{duration}] {start} - {finish} ({starts} - {finishs})"
     for index, track in enumerate(track_boundaries):
-        print entry.format(
+        print(entry.format(
             index=index,
             duration=format_time_from_seconds(track[1]-track[0])[3:],
             start=format_time_from_seconds(track[0]),
             finish=format_time_from_seconds(track[1]),
             starts=track[0],
             finishs=track[1],
-        )
+        ))
 
-    print 'Total tracks: {}'.format(len(track_boundaries))
+    print('Total tracks: {}'.format(len(track_boundaries)))
 
 
 def confirm(text=None):
@@ -261,7 +259,7 @@ def confirm(text=None):
     Asks the user for confirmation
     """
     while True:
-        valid = raw_input(text or 'Is this ok?\n').strip()
+        valid = input(text or 'Is this ok?\n').strip()
         if valid.lower() in ['y', 'ye', 'yes']:
             return True
         else:
@@ -294,18 +292,18 @@ def split_file_into_tracks(input_filename, track_boundaries):
             start=track[0],
             end=track[1],
         )
-        print 'Processing {}...'.format(filename)
+        print('Processing {}...'.format(filename))
         result = subprocess.check_call(shlex.split(command_name), stderr=subprocess.PIPE)
 
 
 def main():
     if len(sys.argv) < 2:
-        print 'Need a filename as argument'
+        print('Need a filename as argument')
         return
 
     input_filename = sys.argv[1]
     if not os.path.exists(input_filename):
-        print 'File not found: "{}"'.format(input_filename)
+        print('File not found: "{}"'.format(input_filename))
         return
 
     chapters_data = get_chapters_data(input_filename)
@@ -327,7 +325,7 @@ def main():
         return
 
     split_file_into_tracks(input_filename, tracks_data)
-    raw_input('Finished.')
+    input('Finished.')
 
 
 if __name__ == "__main__":
