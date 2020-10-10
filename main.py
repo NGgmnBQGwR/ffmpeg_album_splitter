@@ -5,8 +5,10 @@ Simple ffmpeg wrapper to split single file musical albums
 into separate tracks, using silence as track separator.
 """
 
+import re
 import os
 import sys
+import json
 import math
 import shlex
 import subprocess
@@ -14,7 +16,11 @@ from collections import namedtuple
 
 FFMPEG_GET_INTERVAL_COMMAND = r'''ffmpeg -i "{input}" -af silencedetect=noise=-30dB:d=0.25 -f null -'''
 FFMPEG_CUT_TRACK = r'''ffmpeg -i "{input}" -acodec copy -ss {start} -to {end} "{output}"'''
+YOUTUBE_DL_PATH = r'd:\Projects\youtube-dl\src\youtube_dl\__main__.py'
+GET_YOUTUBE_JSON = r'''python "{path}" -j "{input}"'''
 CACHE_FOLDER = '_CACHE'
+YOUTUBE_URL = r'https://www.youtube.com/watch?v={}'
+YOUTUBE_ID_REGEXP = r'.*([A-Za-z0-9_\\-]{11})$'  # https://stackoverflow.com/a/19647711
 
 # any silence longer than this will emit a warning
 MAX_SILENCE_LENGTH = 5
@@ -61,6 +67,40 @@ def format_time_from_seconds(input_seconds):
         seconds=seconds,
         milliseconds=milliseconds,
     )
+
+
+def get_chapters_data(input_filename):
+    match = re.match(YOUTUBE_ID_REGEXP, os.path.splitext(input_filename)[0])
+    filename_contains_youtube_id = bool(match)
+    if not filename_contains_youtube_id:
+        print("Filename doesn't contain Youtube ID - not trying to get chapters info.")
+        return None
+
+    youtube_id = match.group(1)
+    output_filename = '_output_{}.json'.format(youtube_id)
+    output_filepath = os.path.join(CACHE_FOLDER, output_filename)
+    if os.path.exists(output_filepath):
+        with open(output_filepath, 'rb') as inp:
+            return json.loads(inp.read() or '{}')
+
+    command_name = GET_YOUTUBE_JSON.format(path=YOUTUBE_DL_PATH, input=YOUTUBE_URL.format(youtube_id))
+    command = subprocess.Popen(
+        shlex.split(command_name),
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    print 'Calling youtube-dl to get video JSON metadata...'
+    output_out, output_err = command.communicate()
+
+    data = json.loads(output_out)
+    chapters = data['chapters'] or []
+    # ffmpeg writes everything to the stderr, which is why we're ignoring stdout
+    with open(output_filepath, 'w') as out:
+        out.write(json.dumps(chapters))
+
+    return chapters
 
 
 def get_silence_data(input_filename):
@@ -268,8 +308,14 @@ def main():
         print 'File not found: "{}"'.format(input_filename)
         return
 
-    silence_data = get_silence_data(input_filename)
-    sound_data = get_sound_boundaries(silence_data)
+    chapters_data = get_chapters_data(input_filename)
+    if chapters_data:
+        print("Found chapters info, using it.")
+        sound_data = chapters_data
+    else:
+        print("Unable to get chapters info, using ffmpeg.")
+        silence_data = get_silence_data(input_filename)
+        sound_data = get_sound_boundaries(silence_data)
 
     for mult in [1, 0.5, 1.5, 0.25, 2, 3, 4, 5]:
         tracks_data = find_tracks(sound_data, mult)
