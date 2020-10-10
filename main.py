@@ -270,6 +270,12 @@ def confirm(text=None):
             return False
 
 
+# taken from https://github.com/django/django/blob/f1f24539d8c86f60d1e2951a19eb3178e15d6399/django/utils/text.py#L222
+def get_valid_filename(s):
+    s = str(s).strip()
+    return re.sub(r'(?u)[^-\w. ]', '', s)
+
+
 def split_file_into_tracks(input_filename, track_boundaries, filenames):
     """
     Splits input audio file into separate tracks.
@@ -289,7 +295,7 @@ def split_file_into_tracks(input_filename, track_boundaries, filenames):
 
     for index, track in enumerate(track_boundaries):
         if filenames:
-            filename = filenames[index]
+            filename = get_valid_filename(filenames[index])
         else:
             filename = "Track{:02}".format(index)
 
