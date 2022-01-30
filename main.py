@@ -14,8 +14,8 @@ from collections import namedtuple
 
 FFMPEG_GET_INTERVAL_COMMAND = r'''ffmpeg -i "{input}" -af silencedetect=noise=-30dB:d=0.25 -f null -'''
 FFMPEG_CUT_TRACK = r'''ffmpeg -i "{input}" -acodec copy -ss {start} -to {end} "{output}"'''
-YOUTUBE_DL_PATH = r'd:\Projects\youtube-dl\src\youtube_dl\__main__.py'
-GET_YOUTUBE_JSON = r'''python "{path}" -j "{input}"'''
+YOUTUBE_DL_PATH = r'd:\Projects\youtube-dl\youtube-dl.exe'
+GET_YOUTUBE_JSON = r'''"{path}" -j "{input}"'''
 CACHE_FOLDER = '_CACHE'
 YOUTUBE_URL = r'https://www.youtube.com/watch?v={}'
 YOUTUBE_ID_REGEXP = r'.*([A-Za-z0-9_\\-]{11})'  # https://stackoverflow.com/a/19647711
