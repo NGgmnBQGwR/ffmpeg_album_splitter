@@ -18,7 +18,7 @@ YOUTUBE_DL_PATH = r'd:\Projects\youtube-dl\src\youtube_dl\__main__.py'
 GET_YOUTUBE_JSON = r'''python "{path}" -j "{input}"'''
 CACHE_FOLDER = '_CACHE'
 YOUTUBE_URL = r'https://www.youtube.com/watch?v={}'
-YOUTUBE_ID_REGEXP = r'.*([A-Za-z0-9_\\-]{11})$'  # https://stackoverflow.com/a/19647711
+YOUTUBE_ID_REGEXP = r'.*([A-Za-z0-9_\\-]{11})'  # https://stackoverflow.com/a/19647711
 
 # any silence longer than this will emit a warning
 MAX_SILENCE_LENGTH = 5
