@@ -353,11 +353,14 @@ def main():
         print('File not found: "{}"'.format(input_filename))
         return
 
+    chapters_data = []
     if skip_chapters:
         print("Skipping chapters.")
-        chapters_data = []
     else:
-        chapters_data = get_chapters_data(input_filename)
+        try:
+            chapters_data = get_chapters_data(input_filename)
+        except Exception as e:
+            print('Error: {}'.format(e))
 
     if chapters_data:
         print("Found chapters info, using it.")
