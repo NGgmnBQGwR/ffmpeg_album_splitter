@@ -334,19 +334,40 @@ def make_numbered_filenames(filenames):
     return filenames
 
 
+def mass_extract_metadata():
+    ignored_extensions = ['.txt', '.py', '.pyc', '.bat', '.json', '.exe', '']
+    for f in os.listdir(os.getcwd()):
+        n,e = os.path.splitext(f)
+        if e in ignored_extensions:
+            continue
+
+        try:
+            chapters_data = get_chapters_data(f)
+        except Exception as e:
+            print('Error: {}'.format(e))
+
+
 def main():
     args = sys.argv[1:]
 
     if len(args) < 1:
-        print('Need a filename as argument')
+        print('Need a filename as argument (-sc, -em)')
         return
 
     skip_chapters = False
+    extract_metadata = False
     for arg in args[:]:
         if arg.startswith('-'):
             if arg == '-sc':
                 skip_chapters = True
+            if arg == '-em':
+                extract_metadata = True
             args.remove(arg)
+
+    if extract_metadata:
+        print('Doing mass metadata extraction')
+        mass_extract_metadata()
+        return
 
     input_filename = args[0]
     if not os.path.exists(input_filename):
